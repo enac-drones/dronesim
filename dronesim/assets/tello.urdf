@@ -1,0 +1,166 @@
+<?xml version="1.0" ?>
+
+<robot name="tello">
+
+  <material name="white">
+    <color rgba="1. 1. 1. 1.0"/>
+  </material>
+
+  <material name="black">
+    <color rgba="0. 0. 0. 1.0"/>
+  </material>
+
+  <material name="blue0">
+    <color rgba="15./255. 141./255. 238./255. 1.0"/>
+  </material>
+
+  <material name="darkgrey">
+    <color rgba="0.4 0.4 0.4 1.0"/>
+  </material>
+
+  <material name="blue1">
+    <color rgba="0.06 0.46 0.9 0.6"/>
+  </material>
+
+  <configuration type="quad"/>
+
+  <properties arm="0.0635" kf="2.0e-9" km="4.74e-12" thrust2weight="2" max_speed_kmh="30" gnd_eff_coeff="11.36859" prop_radius="3.31348e-2" drag_coeff_xy="9.1785e-7" drag_coeff_z="10.311e-7" dw_coeff_1="2267.18" dw_coeff_2=".16" dw_coeff_3="-.11"/>
+
+  <control>
+    <indi actuator_nr="4" output_nr="4" />
+    <indi_1 roll="  30.0  30.0 -30.0  -30.0" />
+    <indi_2 pitch="-30.0  30.0  30.0  -30.0" />
+    <indi_3 yaw="   -5.0   5.0  -5.0    5.0" />
+    <indi_4 thrust=" 1.7   1.7   1.7    1.7" />
+
+    <indi_guidance_gains>
+      <pos kp="1.7" kd="2.5"/>
+    </indi_guidance_gains>
+    
+    <indi_att_gains>
+      <att  p="10." q="10." r="4." />
+      <rate p="12." q="12." r="7." />
+    </indi_att_gains>
+
+    <pwm>
+      <pwm2rpm scale="20000. 20000. 20000. 20000." const="0. 0. 0. 0." />
+      <limit min="0  0  0  0" max="1  1  1  1" />
+    </pwm>
+  </control>
+
+
+  <link name="base_link"> 
+
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.08"/>
+      <inertia ixx="4.28e-5" ixy="0.0" ixz="0.0" iyy="4.28e-5" iyz="0.0" izz="8.36e-5"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.5708 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="./tello_meshes/tello_v2.stl" scale=".0011 .0011 .0011"/>
+      </geometry> 
+      <material name="darkgrey"/>
+    </visual>
+
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.0475" length=".041"/>
+      </geometry>
+    </collision>  
+
+  </link>
+
+  <link name="prop0_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0475 0.0475 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.0475 0.0475 0.01"/>
+      <geometry>
+        <cylinder radius="0.025" length=".001"/>
+      </geometry>
+      <material name="blue1"/>
+    </visual> 
+  </link>
+  <joint name="prop0_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="prop0_link"/>
+  </joint>
+
+  <link name="prop1_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.0475 0.0475 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.0475 0.0475 0.01"/>
+      <geometry>
+        <cylinder radius="0.025" length=".001"/>
+      </geometry>
+      <material name="blue1"/>
+    </visual> 
+  </link>
+  <joint name="prop1_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="prop1_link"/>
+  </joint>
+
+  <link name="prop2_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.0475 -0.0475 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.0475 -0.0475 0.01"/>
+      <geometry>
+        <cylinder radius="0.025" length=".001"/>
+      </geometry>
+      <material name="blue1"/>
+    </visual> 
+  </link>
+  <joint name="prop2_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="prop2_link"/>
+  </joint>
+
+  <link name="prop3_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0475 -0.0475 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.0475 -0.0475 0.01"/>
+      <geometry>
+        <cylinder radius="0.025" length=".001"/>
+      </geometry>
+      <material name="blue1"/>
+    </visual> 
+  </link>
+  <joint name="prop3_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="prop3_link"/>
+  </joint>
+
+  <link name="center_of_mass_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="center_of_mass_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="center_of_mass_link"/>
+  </joint>
+
+</robot>
+
