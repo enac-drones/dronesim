@@ -3,8 +3,8 @@ import numpy as np
 from gym import spaces
 
 from dronesim.envs.BaseAviary import DroneModel, Physics, BaseAviary
-from dronesim.control.DSLPIDControl import DSLPIDControl
-from dronesim.control.SimplePIDControl import SimplePIDControl
+# from dronesim.control.DSLPIDControl import DSLPIDControl
+# from dronesim.control.SimplePIDControl import SimplePIDControl
 from dronesim.control.INDIControl import INDIControl
 
 import pybullet as p
