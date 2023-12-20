@@ -92,6 +92,12 @@ def jac_vec_quat(vec,q):
     p2 = np.dot(np.dot(v.T,vec),I) + v.dot(vec.T) - vec.dot(v.T) - w*skew(vec)
     return np.hstack([p1.reshape(3,1),p2])*2 # p1, p2
 
+def norm_ang(x):
+            while x > np.pi :
+                x -= 2*np.pi
+            while x < -np.pi :
+                x += 2*np.pi
+            return x
 
 class INDIControl(BaseControl):
     """INDI control class for Crazyflies.
@@ -203,6 +209,7 @@ class INDIControl(BaseControl):
         super().reset()
         #### Store the last roll, pitch, and yaw ###################
         self.last_rpy = np.zeros(3)
+        self.diffed_cur_ang_vel = np.zeros(3) # ERASE
         #### Initialized PID control variables #####################
         self.last_pos_e = np.zeros(3)
         self.integral_pos_e = np.zeros(3)
@@ -249,7 +256,8 @@ class INDIControl(BaseControl):
                        target_pos,
                        target_rpy=np.zeros(3),
                        target_vel=np.zeros(3),
-                       target_rpy_rates=np.zeros(3)
+                       target_rpy_rates=np.zeros(3),
+                       target_acc=np.zeros(3)
                        ):
         """Computes the PID control action (as RPMs) for a single drone.
 
@@ -291,7 +299,8 @@ class INDIControl(BaseControl):
                                                                          cur_vel,
                                                                          target_pos,
                                                                          target_rpy,
-                                                                         target_vel
+                                                                         target_vel,
+                                                                         target_acc
                                                                          )
 
 
@@ -320,6 +329,7 @@ class INDIControl(BaseControl):
                                target_pos,
                                target_rpy,
                                target_vel,
+                               target_acc=np.zeros(3),
                                use_quaternion = False,
                                nonlinear_increment = False
                                ):
@@ -354,36 +364,30 @@ class INDIControl(BaseControl):
 
         """
         debug_log = False
-
+        #-------------------
         # Linear controller to find the acceleration setpoint from position and velocity
-        # pos_x_err  = guidance_h.ref.pos.x) - stateGetPositionNed_f()->x;
-        # pos_y_err  = guidance_h.ref.pos.y) - stateGetPositionNed_f()->y;
-        # pos_z_err  = guidance_v_z_ref - stateGetPositionNed_i()->z);
         pos_e = target_pos - cur_pos
 
         # Speed setpoint
-        # speed_sp_y = pos_y_err * guidance_indi_pos_gain;
-        # speed_sp_z = pos_z_err * guidance_indi_pos_gain;
         speed_sp = pos_e * self.guidance_indi_pos_gain
 
-        # Not used for the momonet
         vel_e = speed_sp + target_vel - cur_vel
 
         # Set acceleration setpoint :
 
         # accel_sp = (speed_sp - cur_vel) * self.guidance_indi_speed_gain
         accel_sp = vel_e * self.guidance_indi_speed_gain
+       
 
         # Calculate the acceleration via finite difference TODO : this is a rotated sensor output in real life, so ad sensor to the sim ! 
         cur_accel = (cur_vel - self.last_vel) / control_timestep
         # print(f'Cur Velocity : {cur_vel[2]}, Last Velocity : {self.last_vel[2]}')
         self.last_vel = cur_vel
 
-        accel_e = accel_sp - cur_accel
+        accel_e = accel_sp + target_acc - cur_accel
 
         # Bound the acceleration error so that the linearization still holds
         accel_e = np.clip(accel_e, -6.0, 6.0) # For Z : -9.0, 9.0 FIX ME !
-        #accel_e = np.clip(accel_e, -2.0, 2.0) # Trying to slow down crazy agility ! Nope it does not work ! Oscillates...
 
         # EULER VERSION
         # # Calculate matrix of partial derivatives
@@ -397,9 +401,9 @@ class INDIControl(BaseControl):
         cph,cth,cps = np.cos(phi),np.cos(theta),np.cos(psi)
 
         # theta = np.clip(theta,-np.pi,0) # FIX ME
-        lift = np.sin(theta)*-9.81 # FIX ME
-        liftd = 0.
-        T = np.cos(theta)*9.81
+        # lift = np.sin(theta)*-9.81 # FIX ME
+        # liftd = 0.
+        # T = np.cos(theta)*9.81
         # get the derivative of the lift wrt to theta
         # liftd = guidance_indi_get_liftd(stateGetAirspeed_f(), eulers_zxy.theta);
 
@@ -411,24 +415,10 @@ class INDIControl(BaseControl):
         G = np.array([[(cph*sps-sph*cps*sth)*T , (cph*cps*cth)*T , sph*sps+cph*cps*sth],
                       [(-sph*sps*sth-cps*cph)*T, (cph*sps*cth)*T , cph*sps*sth-cps*sph],
                       [-cth*sph*T              , -sth*cph*T      ,     cph*cth        ]  ])
-
-        # Calculate the matrix of partial derivatives of the pitch, roll and thrust.
-        # w.r.t. the NED accelerations for YXZ eulers
-        # ddx = G*[dtheta,dphi,dT]
-        # G = np.array([[cth * cph * T , -sth * sph * T, sth * cph],
-        #             [0.,    -cph * T   ,  -sph ], 
-        #             [-sth * cph * T,   -cth * sph * T  ,  cth * cph] ])
-
-        # Matrix of partial derivatives for Lift force
-        GUIDANCE_INDI_PITCH_EFF_SCALING = 1.0
-
-        # GL = np.array([[ cph*cth*sps*T + cph*sps*lift , (cth*cps - sph*sth*sps)*T*GUIDANCE_INDI_PITCH_EFF_SCALING + sph*sps*liftd , sth*cps + sph*cth*sps],
-        #                [-cph*cth*cps*T - cph*cps*lift , (cth*sps + sph*sth*cps)*T*GUIDANCE_INDI_PITCH_EFF_SCALING - sph*cps*liftd , sth*sps - sph*cth*cps],
-        #                [    -sph*cth*T -     sph*lift ,                -cph*sth*T*GUIDANCE_INDI_PITCH_EFF_SCALING +     cph*liftd ,        cph*cth       ] ])
-
-        # GL = np.array([[(cth*cps - sph*sth*sps)*T*GUIDANCE_INDI_PITCH_EFF_SCALING + sph*sps*liftd ,  cph*cth*sps*T + cph*sps*lift , sth*cps + sph*cth*sps],
-        #                [(cth*sps + sph*sth*cps)*T*GUIDANCE_INDI_PITCH_EFF_SCALING - sph*cps*liftd , -cph*cth*cps*T - cph*cps*lift , sth*sps - sph*cth*cps],
-        #                [               -cph*sth*T*GUIDANCE_INDI_PITCH_EFF_SCALING +     cph*liftd ,     -sph*cth*T -     sph*lift ,        cph*cth       ] ])
+        
+        Gp = np.array([[(cph*sps*cth)*T , (cth*cps-sph*sps*sth)*T , sph*cps+sph*sps*cth],
+                      [(-cph*cth*cps)*T, (cph*sps+sph*sth*cps)*T , sps*sth-cps*cth*sph],
+                      [-sph*cth*T              , -cph*sth*T      ,     cph*cth        ]  ])
 
 
         # Invert this matrix
@@ -437,21 +427,16 @@ class INDIControl(BaseControl):
         # Calculate roll,pitch and thrust command
         control_increment = G_inv.dot(accel_e)
 
-        # Rotate the phi theta : Need to correct this on the upper G ! FIX ME !
-        R_psi = np.array([[np.cos(psi), -np.sin(psi)],
-                          [np.sin(psi),  np.cos(psi)]])
-        control_increment_rotated = R_psi.dot(control_increment[:2])
-        control_increment[:2] = control_increment_rotated
-
         target_quat = np.array([0.0, 0.0, 0.0, 1.0])
 
-        yaw_increment = target_rpy[2] - psi #cur_rpy[2]
+        yaw_increment = norm_ang(target_rpy[2] - psi) #cur_rpy[2]
         target_euler = cur_rpy + np.array([control_increment[0], control_increment[1], yaw_increment])
+        # target_euler = np.array([control_increment[0], control_increment[1], yaw_increment])
 
         thrust = self.last_thrust + control_increment[2] # for EULER version !!!! FIX ME
         # thrust = self.last_thrust + thrust_increment # for Quaternion version 
 
-
+        # print(f' Roll : {control_increment[0]}, Pitch : {control_increment[1]} , Yaw :  {yaw_increment}, Thr : {thrust}, Psi : {psi}')
         return thrust, target_euler, pos_e, target_quat #quat_increment
     
     ################################################################################
@@ -486,33 +471,16 @@ class INDIControl(BaseControl):
             (actuator_nr,1)-shaped array of integers containing the RPMs to apply to each of the 4 motors.
 
         """
-        # calculate quat attitude error q_err = q2 (hamilton product) inverse(q1)
-        # https://math.stackexchange.com/questions/3572459/how-to-compute-the-orientation-error-between-two-3d-coordinate-frames
-
         # int32_quat_inv_comp(&att_err, att_quat, &quat_sp) # from Paparazzi !
         # XYZ - XZY - ...
-        # target_quat = (Rotation.from_euler('XYZ', target_euler, degrees=False)).as_quat()
         target_quat = np.array(p.getQuaternionFromEuler(target_euler))
 
         quat_err = quat_inv_comp(cur_quat,target_quat)
         
         # wrap it in the shortest direction
-        # att_err = quat_wrap_shortest(quat_err);
+        att_err = quat_wrap_shortest(quat_err);
 
         att_err = np.array(quat_err[:3])
-
-        # Rotate the phi theta : Need to correct this on the upper G ! FIX ME !
-        cur_rpy = np.array(p.getEulerFromQuaternion(cur_quat))
-        phi, theta, psi = cur_rpy[0],cur_rpy[1],cur_rpy[2]
-
-        R_psi = np.array([[np.cos(psi), -np.sin(psi)],
-                          [np.sin(psi),  np.cos(psi)]])
-
-        R_psi = np.linalg.inv(R_psi)
-
-        att_err_rotated = R_psi.dot(att_err[:2])
-        # pdb.set_trace()
-        att_err[:2] = att_err_rotated
 
         # local variable to compute rate setpoints based on attitude error
         rate_sp = Rate()
@@ -540,9 +508,9 @@ class INDIControl(BaseControl):
 
         # Calculate the virtual control (reference acceleration) based on a PD controller
         angular_accel_ref = Rate()
-        angular_accel_ref.p = (rate_sp.p - rates_filt.p) * self.indi_gains.rate.p;
-        angular_accel_ref.q = (rate_sp.q - rates_filt.q) * self.indi_gains.rate.q;
-        angular_accel_ref.r = (rate_sp.r - rates_filt.r) * self.indi_gains.rate.r;
+        angular_accel_ref.p = (rate_sp.p - rates_filt.p) * self.indi_gains.rate.p
+        angular_accel_ref.q = (rate_sp.q - rates_filt.q) * self.indi_gains.rate.q
+        angular_accel_ref.r = (rate_sp.r - rates_filt.r) * self.indi_gains.rate.r
 
         indi_v = np.zeros(4) # roll-pitch-yaw-thrust
         indi_v[0] = angular_accel_ref.p - angular_accel[0]

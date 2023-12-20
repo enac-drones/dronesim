@@ -65,7 +65,8 @@ class BaseControl(object):
                                 target_pos,
                                 target_rpy=np.zeros(3),
                                 target_vel=np.zeros(3),
-                                target_rpy_rates=np.zeros(3)
+                                target_rpy_rates=np.zeros(3),
+                                target_acc=np.zeros(3),
                                 ):
         """Interface method using `computeControl`.
 
@@ -96,7 +97,8 @@ class BaseControl(object):
                                    target_pos=target_pos,
                                    target_rpy=target_rpy,
                                    target_vel=target_vel,
-                                   target_rpy_rates=target_rpy_rates
+                                   target_rpy_rates=target_rpy_rates,
+                                   target_acc=target_acc
                                    )
 
     ################################################################################
@@ -110,7 +112,8 @@ class BaseControl(object):
                        target_pos,
                        target_rpy=np.zeros(3),
                        target_vel=np.zeros(3),
-                       target_rpy_rates=np.zeros(3)
+                       target_rpy_rates=np.zeros(3),
+                       target_acc=np.zeros(3)
                        ):
         """Abstract method to compute the control action for a single drone.
 
