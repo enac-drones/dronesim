@@ -257,8 +257,9 @@ class BaseAviary(gym.Env):
                                          physicsClientId=self.CLIENT
                                          )
             ret = p.getDebugVisualizerCamera(physicsClientId=self.CLIENT)
-            print("viewMatrix", ret[2])
-            print("projectionMatrix", ret[3])
+
+            p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
+
             if self.USER_DEBUG:
                 #### Add input sliders to the GUI ##########################
                 self.SLIDERS = -1*np.ones(4)
