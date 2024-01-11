@@ -1,4 +1,4 @@
-"""Script demonstrating the quadrotors following a desired velocity vector (unit vector + magnitude)
+"""Script demonstrating the quadrotors following a desired velocity vector (unit vector + magnitude normalized by max vehicle speed in Km/h)
 """
 import os
 import time
@@ -89,7 +89,7 @@ if __name__ == "__main__":
                 # position [0:3]  quaternion [3:7]   Attitude  VelocityInertialFrame     qpr         motors
                 #   X  Y  Z       Q1   Q2   Q3  Q4   R  P   Y    VX     VY    VZ      WX WY WZ       P0 P1 P2 P3
                 V_des_unit = np.ones(3)*0.2
-                magnitude = 0.02
+                magnitude = 0.02 # When 1 , the vehicle flies at its max speed in Km/h ! Max speed is in vehicle's .urdf file inside assets folder.
                 action[str(j)] = np.array([V_des_unit[0],V_des_unit[1],V_des_unit[2], magnitude])
 
         #### Log the simulation ####################################
