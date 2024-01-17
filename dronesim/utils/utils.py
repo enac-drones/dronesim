@@ -40,11 +40,10 @@ def clamp_vector(v:np.ndarray,max_norm:float) -> np.ndarray:
         Clamped vector(s).
 
     """
-
     norm_v = np.linalg.norm(v,axis=0)
     normalized_v = v/norm_v
     clamped_norms = np.clip(norm_v,0,max_norm)
-    return normalized_v*clamp_vector
+    return normalized_v*clamped_norms
 
     
 ################################################################################
