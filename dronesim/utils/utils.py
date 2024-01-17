@@ -22,6 +22,30 @@ def R_aero_to_body(alpha, beta):
                      [sb   ,  cb   ,  0.],
                      [sa*cb, -sa*sb,  ca]])
 
+
+def clamp_vector(v:np.ndarray,max_norm:float) -> np.ndarray:
+    """Rescale the vector(s) such that the norm does not exceed the given argument.
+
+    Parameters
+    ----------
+    v : np.ndarray
+        Vector (or vector array, with coordinates of each vector on axis 0) to be clamped.
+
+    max_norm: float
+        Maximal accepted norm for the vector(s)
+
+    Returns
+    -------
+    np.ndarray
+        Clamped vector(s).
+
+    """
+
+    norm_v = np.linalg.norm(v,axis=0)
+    normalized_v = v/norm_v
+    clamped_norms = np.clip(norm_v,0,max_norm)
+    return normalized_v*clamp_vector
+
     
 ################################################################################
 '''
