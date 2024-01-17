@@ -383,7 +383,7 @@ class INDIControl(BaseControl):
         accel_e = accel_sp - cur_accel
 
         # Bound the acceleration error so that the linearization still holds
-        accel_e = np.clip(accel_e, -6.0, 6.0) # For Z : -9.0, 9.0 FIX ME !
+        accel_e = np.clip(accel_e, -6.0, 6.0) # For Z : -9.0, 9.0 FIXME !
         #accel_e = np.clip(accel_e, -2.0, 2.0) # Trying to slow down crazy agility ! Nope it does not work ! Oscillates...
 
         # EULER VERSION
@@ -397,8 +397,8 @@ class INDIControl(BaseControl):
         sph,sth,sps = np.sin(phi),np.sin(theta),np.sin(psi)
         cph,cth,cps = np.cos(phi),np.cos(theta),np.cos(psi)
 
-        # theta = np.clip(theta,-np.pi,0) # FIX ME
-        lift = np.sin(theta)*-9.81 # FIX ME
+        # theta = np.clip(theta,-np.pi,0) # FIXME
+        lift = np.sin(theta)*-9.81 # FIXME
         liftd = 0.
         T = np.cos(theta)*9.81
         # get the derivative of the lift wrt to theta
@@ -433,12 +433,12 @@ class INDIControl(BaseControl):
 
 
         # Invert this matrix
-        G_inv = np.linalg.pinv(G) #FIX ME
+        G_inv = np.linalg.pinv(G) #FIXME
 
         # Calculate roll,pitch and thrust command
         control_increment = G_inv.dot(accel_e)
 
-        # Rotate the phi theta : Need to correct this on the upper G ! FIX ME !
+        # Rotate the phi theta : Need to correct this on the upper G ! FIXME !
         R_psi = np.array([[np.cos(psi), -np.sin(psi)],
                           [np.sin(psi),  np.cos(psi)]])
         control_increment_rotated = R_psi.dot(control_increment[:2])
@@ -449,7 +449,7 @@ class INDIControl(BaseControl):
         yaw_increment = target_rpy[2] - psi #cur_rpy[2]
         target_euler = cur_rpy + np.array([control_increment[0], control_increment[1], yaw_increment])
 
-        thrust = self.last_thrust + control_increment[2] # for EULER version !!!! FIX ME
+        thrust = self.last_thrust + control_increment[2] # for EULER version !!!! FIXME
         # thrust = self.last_thrust + thrust_increment # for Quaternion version 
 
         # Over-wrtie the target euler for 6DOF -> This should be changed to an intelligent method !
@@ -504,7 +504,7 @@ class INDIControl(BaseControl):
 
         att_err = np.array(quat_err[:3])
 
-        # Rotate the phi theta : Need to correct this on the upper G ! FIX ME !
+        # Rotate the phi theta : Need to correct this on the upper G ! FIXME !
         cur_rpy = np.array(p.getEulerFromQuaternion(cur_quat))
         phi, theta, psi = cur_rpy[0],cur_rpy[1],cur_rpy[2]
 

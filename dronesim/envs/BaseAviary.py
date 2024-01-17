@@ -795,7 +795,7 @@ class BaseAviary(gym.Env):
                                      physicsClientId=self.CLIENT
                                      )
             p.applyExternalTorque(self.DRONE_IDS[nth_drone],
-                                  4, # FIX ME This should be -1 to define the body, here it only works as there is an additional link called center of mass in the URDF file! will not work for tohers !
+                                  4, # FIXME This should be -1 to define the body, here it only works as there is an additional link called center of mass in the URDF file! will not work for tohers !
                                   torqueObj=[0, 0, z_torque],
                                   flags=p.LINK_FRAME,
                                   physicsClientId=self.CLIENT
@@ -823,7 +823,7 @@ class BaseAviary(gym.Env):
         gamma = np.arcsin(vel[2]/np.linalg.norm(vel))
         alpha = -rpy[1]-gamma # Assuming no WIND ! and using pitch angle as Angle of Attack
         beta  = np.arctan(vel_b[1]/vel_b[0])
-        V_air = vel_b[0] if vel_b[0] > 0. else 0. #np.linalg.norm(vel) # FIX ME get real airspeed along x axis with wind 
+        V_air = vel_b[0] if vel_b[0] > 0. else 0. #np.linalg.norm(vel) # FIXME get real airspeed along x axis with wind 
         rho   = 1.225 # Get this as a function of altitude... pos[2]
         Pdyn  = 0.5*rho*V_air*V_air
 
@@ -892,7 +892,7 @@ class BaseAviary(gym.Env):
         p.applyExternalTorque(self.DRONE_IDS[nth_drone],
                             2, # to center of mass - Check this for different configurations - Will not work generically :(
                             torqueObj=[M_aero_body[0],M_aero_body[1],M_aero_body[2]],
-                            flags=p.LINK_FRAME,  # FIX ME : see https://github.com/bulletphysics/bullet3/issues/1949 
+                            flags=p.LINK_FRAME,  # FIXME : see https://github.com/bulletphysics/bullet3/issues/1949 
                             physicsClientId=self.CLIENT
                             )
 
@@ -999,7 +999,7 @@ class BaseAviary(gym.Env):
         # gamma = np.arcsin(vel[2]/np.linalg.norm(vel))
         # alpha = -rpy[1]-gamma # Assuming no WIND ! and using pitch angle as Angle of Attack
         # beta  = np.arctan(vel_b[1]/vel_b[0])
-        # V_air = vel_b[0] if vel_b[0] > 0. else 0. #np.linalg.norm(vel) # FIX ME get real airspeed along x axis with wind 
+        # V_air = vel_b[0] if vel_b[0] > 0. else 0. #np.linalg.norm(vel) # FIXME get real airspeed along x axis with wind 
         # rho   = 1.225 # Get this as a function of altitude... pos[2]
         # Pdyn  = 0.5*rho*V_air*V_air
 
@@ -1071,7 +1071,7 @@ class BaseAviary(gym.Env):
             p.applyExternalTorque(self.DRONE_IDS[nth_drone],
                                 i, # to base link : fuselage
                                 torqueObj=[0., -Mb[1], 0.],#[M[0],M[1],M[2]],
-                                flags=p.LINK_FRAME, #FIX ME FIXME
+                                flags=p.LINK_FRAME, #FIXME FIXME
                                 physicsClientId=self.CLIENT
                                 )
             i+=1
@@ -1111,7 +1111,7 @@ class BaseAviary(gym.Env):
             p.applyExternalTorque(self.DRONE_IDS[nth_drone],
                                   i+1, # to base link : fuselage
                                   torqueObj=[0., 0., s[i]*torques[i]],
-                                  flags=p.LINK_FRAME, #FIX ME FIXME
+                                  flags=p.LINK_FRAME, #FIXME FIXME
                                   physicsClientId=self.CLIENT
                                   )
 
@@ -1156,7 +1156,7 @@ class BaseAviary(gym.Env):
             p.applyExternalTorque(self.DRONE_IDS[nth_drone],
                                   i, # to base link : fuselage
                                   torqueObj=[0., 0., torques[j]],
-                                  flags=p.LINK_FRAME, #FIX ME FIXME
+                                  flags=p.LINK_FRAME, #FIXME FIXME
                                   physicsClientId=self.CLIENT
                                   )
 
@@ -1218,13 +1218,13 @@ class BaseAviary(gym.Env):
                                      physicsClientId=self.CLIENT
                                      )
             p.applyExternalTorque(self.DRONE_IDS[nth_drone],
-                                  -1,  # FIX ME : this is not correct , use center of mass !!! 
+                                  -1,  # FIXME : this is not correct , use center of mass !!! 
                                   torqueObj=[m_noise[0], m_noise[1], z_torque],
                                   flags=p.LINK_FRAME,
                                   physicsClientId=self.CLIENT
                                   )
         wind=0
-        wind_vector = np.array([0.,-10.5,0.]) # FIX ME : make this parametric 
+        wind_vector = np.array([0.,-10.5,0.]) # FIXME : make this parametric 
         drag_coeff = -0.0438 # This is only for Tello (modeled infront of ENAC's Windshape)
         
         if wind:

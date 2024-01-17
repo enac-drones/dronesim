@@ -387,7 +387,7 @@ class INDIControl(BaseControl):
         accel_e = accel_sp + target_acc - cur_accel
 
         # Bound the acceleration error so that the linearization still holds
-        accel_e = np.clip(accel_e, -6.0, 6.0) # For Z : -9.0, 9.0 FIX ME !
+        accel_e = np.clip(accel_e, -6.0, 6.0) # For Z : -9.0, 9.0 FIXME !
 
         # EULER VERSION
         # # Calculate matrix of partial derivatives
@@ -400,8 +400,8 @@ class INDIControl(BaseControl):
         sph,sth,sps = np.sin(phi),np.sin(theta),np.sin(psi)
         cph,cth,cps = np.cos(phi),np.cos(theta),np.cos(psi)
 
-        # theta = np.clip(theta,-np.pi,0) # FIX ME
-        # lift = np.sin(theta)*-9.81 # FIX ME
+        # theta = np.clip(theta,-np.pi,0) # FIXME
+        # lift = np.sin(theta)*-9.81 # FIXME
         # liftd = 0.
         # T = np.cos(theta)*9.81
         # get the derivative of the lift wrt to theta
@@ -422,7 +422,7 @@ class INDIControl(BaseControl):
 
 
         # Invert this matrix
-        G_inv = np.linalg.pinv(G) #FIX ME
+        G_inv = np.linalg.pinv(G) #FIXME
 
         # Calculate roll,pitch and thrust command
         control_increment = G_inv.dot(accel_e)
@@ -433,7 +433,7 @@ class INDIControl(BaseControl):
         target_euler = cur_rpy + np.array([control_increment[0], control_increment[1], yaw_increment])
         # target_euler = np.array([control_increment[0], control_increment[1], yaw_increment])
 
-        thrust = self.last_thrust + control_increment[2] # for EULER version !!!! FIX ME
+        thrust = self.last_thrust + control_increment[2] # for EULER version !!!! FIXME
         # thrust = self.last_thrust + thrust_increment # for Quaternion version 
 
         # print(f' Roll : {control_increment[0]}, Pitch : {control_increment[1]} , Yaw :  {yaw_increment}, Thr : {thrust}, Psi : {psi}')

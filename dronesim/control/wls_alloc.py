@@ -324,7 +324,7 @@ def wls_alloc(v, umin, umax, B, u_guess, W_init, Wv, Wu, up, gamma_sq=100000, im
 
     # update d = d-alpha*A*p_free
     for i in range(n_c):
-      k_len = min(n_free, len(p_free)) # FIX ME : Pfff this should be fixed! Somehow k is becoming bigger than the p_free length...  
+      k_len = min(n_free, len(p_free)) # FIXME : Pfff this should be fixed! Somehow k is becoming bigger than the p_free length...  
       for k in range(k_len): # Normally should be range(n_free)
         # print(f'Dangerous place ! i : {i} , k : {k}, A shape : {A_free.shape} , p_free shape : {p_free.shape}')
         d[i] -= A_free[i][k] * alpha * p_free[k] # having problem here with i:0 k:1, A(8,4) p_free:(1,) : IndexError: index 1 is out of bounds for axis 0 with size 1
