@@ -44,7 +44,7 @@
     <indi_guidance_gains>
       <pos kp="1.7" kd="2.5"/>
     </indi_guidance_gains>
-    
+
     <indi_att_gains>
       <att  p="10." q="10." r="5." />
       <rate p="18." q="18." r="12." />
@@ -247,7 +247,7 @@
 <link name="arm1">
     <visual>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.0 0.0"/>
       <material name="white">
@@ -261,7 +261,7 @@
     </inertial>
      <collision>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.01 0.01"/>
     </collision>
@@ -270,7 +270,7 @@
 <link name="arm2">
     <visual>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.0 0.0"/>
       <material name="white">
@@ -284,7 +284,7 @@
     </inertial>
      <collision>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.01 0.01"/>
     </collision>
@@ -293,7 +293,7 @@
   <link name="arm3">
     <visual>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.0 0.0"/>
       <material name="white">
@@ -307,7 +307,7 @@
     </inertial>
      <collision>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.01 0.01"/>
     </collision>
@@ -316,7 +316,7 @@
     <link name="arm4">
      <visual>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.0 0.0"/>
       <material name="white">
@@ -330,7 +330,7 @@
     </inertial>
      <collision>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.01 0.01"/>
     </collision>
@@ -339,7 +339,7 @@
     <link name="arm5">
      <visual>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.0 0.0"/>
       <material name="white">
@@ -353,7 +353,7 @@
     </inertial>
      <collision>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.048 0.01 0.01"/>
     </collision>
@@ -362,7 +362,7 @@
     <link name="arm6">
     <visual>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.04 0.0 0.0"/>
       <material name="white">
@@ -376,7 +376,7 @@
     </inertial>
      <collision>
       <geometry>
-        <box size="0.08 0.02 0.02"/> 
+        <box size="0.08 0.02 0.02"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0.045 0.01 0.01"/>
     </collision>

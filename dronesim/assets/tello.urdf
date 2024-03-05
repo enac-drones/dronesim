@@ -36,7 +36,7 @@
     <indi_guidance_gains>
       <pos kp="1.7" kd="2.5"/>
     </indi_guidance_gains>
-    
+
     <indi_att_gains>
       <att  p="10." q="10." r="4." />
       <rate p="12." q="12." r="7." />
@@ -49,7 +49,7 @@
   </control>
 
 
-  <link name="base_link"> 
+  <link name="base_link">
 
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -61,7 +61,7 @@
       <origin rpy="1.5708 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="./tello_meshes/tello_v2.stl" scale=".0011 .0011 .0011"/>
-      </geometry> 
+      </geometry>
       <material name="darkgrey"/>
     </visual>
 
@@ -70,7 +70,7 @@
       <geometry>
         <cylinder radius="0.0475" length=".041"/>
       </geometry>
-    </collision>  
+    </collision>
 
   </link>
 
@@ -86,7 +86,7 @@
         <cylinder radius="0.025" length=".001"/>
       </geometry>
       <material name="blue1"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop0_joint" type="fixed">
     <parent link="base_link"/>
@@ -105,7 +105,7 @@
         <cylinder radius="0.025" length=".001"/>
       </geometry>
       <material name="blue1"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop1_joint" type="fixed">
     <parent link="base_link"/>
@@ -124,7 +124,7 @@
         <cylinder radius="0.025" length=".001"/>
       </geometry>
       <material name="blue1"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop2_joint" type="fixed">
     <parent link="base_link"/>
@@ -143,7 +143,7 @@
         <cylinder radius="0.025" length=".001"/>
       </geometry>
       <material name="blue1"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop3_joint" type="fixed">
     <parent link="base_link"/>
@@ -163,4 +163,3 @@
   </joint>
 
 </robot>
-

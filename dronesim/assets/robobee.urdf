@@ -40,7 +40,7 @@
     <indi_guidance_gains>
       <pos kp="1.0" kd="2.2"/>
     </indi_guidance_gains>
-    
+
     <indi_att_gains>
       <att  p="7." q="7." r="5." />
       <rate p="18." q="18." r="10." />
@@ -53,7 +53,7 @@
   </control>
 
 
-  <link name="base_link"> 
+  <link name="base_link">
 
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -65,7 +65,7 @@
       <origin rpy="1.5708 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="./robobee.obj" scale="1. 1. 1."/>
-      </geometry> 
+      </geometry>
       <material name="darkgrey"/>
     </visual>
 
@@ -74,7 +74,7 @@
       <geometry>
         <cylinder radius="0.15" length=".1"/>
       </geometry>
-    </collision>  
+    </collision>
 
   </link>
 
@@ -90,7 +90,7 @@
         <cylinder radius="0.0635" length=".001"/>
       </geometry>
       <material name="orange_red"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop0_joint" type="fixed">
     <parent link="base_link"/>
@@ -109,7 +109,7 @@
         <cylinder radius="0.0635" length=".001"/>
       </geometry>
       <material name="blue1"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop1_joint" type="fixed">
     <parent link="base_link"/>
@@ -128,7 +128,7 @@
         <cylinder radius="0.0635" length=".001"/>
       </geometry>
       <material name="blue1"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop2_joint" type="fixed">
     <parent link="base_link"/>
@@ -147,7 +147,7 @@
         <cylinder radius="0.0635" length=".001"/>
       </geometry>
       <material name="orange_red"/>
-    </visual> 
+    </visual>
   </link>
   <joint name="prop3_joint" type="fixed">
     <parent link="base_link"/>
@@ -167,4 +167,3 @@
   </joint>
 
 </robot>
-
