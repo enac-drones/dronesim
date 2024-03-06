@@ -18,8 +18,11 @@ from PIL import Image
 from dronesim.database.propeller_database import *
 
 # for fixed-wing vehicle's physics
-# For advanced propeller model based on database
-from dronesim.utils.utils import R_aero_to_body, calculate_propeller_forces_moments
+from dronesim.utils.utils import (
+    MultiDimensionalContinuousPerlinNoise,
+    R_aero_to_body,
+    calculate_propeller_forces_moments,
+)
 
 
 class DroneModel(Enum):
@@ -394,6 +397,10 @@ class BaseAviary(gym.Env):
         self._updateAndStoreKinematicInformation()
         #### Start video recording #################################
         self._startVideoRecording()
+
+        self.perlin_noise = MultiDimensionalContinuousPerlinNoise(
+            dimensions=3, period=100
+        )
 
     ################################################################################
 
@@ -1396,6 +1403,30 @@ class BaseAviary(gym.Env):
         forces = np.array(rpm**2) * self.drones[nth_drone].KF
         torques = np.array(rpm**2) * self.drones[nth_drone].KM
 
+        # Checking the configuration shape :
+        conf = abs(self.drones[nth_drone].conf)
+        # print(f'self.drones[nth_drone].conf : {conf}')
+
+        # Top propellers thrust reduction due to structural blockage
+        for i in [0, 2, 4]:
+            forces[i] = (1 - self.drones[nth_drone].top_prop_blockage * 2.2) * forces[i]
+
+        # Top propeller thrust reduction due to bottom propeller blockage
+        for i in [0, 2, 4]:
+            forces[i] = (
+                1 - self.drones[nth_drone].bottom_prop_blockage * 0.1
+            ) * forces[i]
+
+        # Bottom propellers have lower pitch, less thrust ?
+        for i in [1, 3, 5]:
+            forces[i] = 0.9 * forces[i]
+
+        # Bottom propellers thrust reduction due to top propeller inflow
+        for i in [1, 3, 5]:
+            forces[i] = (
+                1 - self.drones[nth_drone].bottom_prop_blockage * 0.1
+            ) * forces[i]
+
         f_noise = np.random.normal(0, 0.01, self.drones[nth_drone].INDI_ACTUATOR_NR)
         m_noise = np.random.normal(0, 0.001, self.drones[nth_drone].INDI_ACTUATOR_NR)
         forces += f_noise
@@ -1405,6 +1436,7 @@ class BaseAviary(gym.Env):
         # torques[1] = 0.*torques[1]
 
         # z_torque = (-torques[0] + torques[1] - torques[2] + torques[3] - torques[4] + torques[5])
+
         for i in [0, 2, 4]:
             torques[i] *= -1.0
 
@@ -1412,7 +1444,7 @@ class BaseAviary(gym.Env):
             p.applyExternalForce(
                 self.DRONE_IDS[nth_drone],
                 i,
-                forceObj=[0.0, 0.0, forces[j]],  # [f_noise[0], f_noise[1], forces[j]],
+                forceObj=[0.0, 0.0, forces[j]],
                 posObj=[0, 0, 0],
                 flags=p.LINK_FRAME,
                 physicsClientId=self.CLIENT,
@@ -1421,9 +1453,25 @@ class BaseAviary(gym.Env):
                 self.DRONE_IDS[nth_drone],
                 i,  # to base link : fuselage
                 torqueObj=[0.0, 0.0, torques[j]],
-                flags=p.LINK_FRAME,  # FIXME FIXME
+                flags=p.LINK_FRAME,  # FIX ME FIXME
                 physicsClientId=self.CLIENT,
             )
+        # Perlin noise applied directly to main body
+        px, py, pz = self.perlin_noise.next_value()
+        p.applyExternalForce(
+            self.DRONE_IDS[nth_drone],
+            -1,
+            forceObj=[0.1 * px + 2.0, 0.1 * py, 0.02 * pz],
+            posObj=[0, 0, 0],
+            flags=p.LINK_FRAME,
+            physicsClientId=self.CLIENT,
+        )
+        # p.applyExternalTorque(self.DRONE_IDS[nth_drone],
+        #                           -1, # to base link : fuselage
+        #                           torqueObj=[0., 0.1, 0.],
+        #                           flags=p.LINK_FRAME,
+        #                           physicsClientId=self.CLIENT
+        #                           )
 
     ################################################################################
 

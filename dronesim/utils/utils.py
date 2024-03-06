@@ -10,7 +10,87 @@ from math import cos, log, pi, sin
 import numpy as np
 from scipy.optimize import nnls
 
+
 # from gym_pybullet_drones.database.propeller_database import *
+class ContinuousPerlinNoise:
+    def __init__(self, period=100):
+        self.period = period
+        self.gradients = np.random.rand(2) * 2 - 1  # Initial two gradients
+        self.position = 0
+
+    def interpolate(self, a, b, x):
+        """Perform a smooth interpolation between a and b, given fraction x."""
+        ft = x * np.pi
+        f = (1 - np.cos(ft)) * 0.5
+        return a * (1 - f) + b * f
+
+    def next_value(self):
+        """Generate the next Perlin noise value."""
+        if self.position % self.period == 0 and self.position > 0:
+            # Append a new gradient every period
+            new_gradient = np.random.rand() * 2 - 1
+            self.gradients = np.append(self.gradients, new_gradient)
+
+        segment_index = self.position // self.period
+        local_x = (self.position % self.period) / self.period
+
+        left_grad = self.gradients[segment_index]
+        right_grad = self.gradients[segment_index + 1]
+
+        noise_value = self.interpolate(left_grad, right_grad, local_x)
+        self.position += 1
+
+        return noise_value
+
+
+class MultiDimensionalContinuousPerlinNoise:
+    def __init__(self, dimensions=1, period=100):
+        self.period = period
+        self.dimensions = dimensions
+        self.gradients = [
+            np.random.rand(2) * 2 - 1 for _ in range(dimensions)
+        ]  # Initial gradients for each dimension
+        self.positions = [0] * dimensions
+
+    def interpolate(self, a, b, x):
+        """Perform a smooth interpolation between a and b, given fraction x."""
+        ft = x * np.pi
+        f = (1 - np.cos(ft)) * 0.5
+        return a * (1 - f) + b * f
+
+    def next_value(self, dimension_index=None):
+        """Generate the next Perlin noise value for a specific dimension or for all dimensions."""
+        if dimension_index is not None:
+            # Generate noise for the specified dimension
+            return self._generate_noise_for_dimension(dimension_index)
+        else:
+            # Generate and return noise for all dimensions
+            return tuple(
+                self._generate_noise_for_dimension(i) for i in range(self.dimensions)
+            )
+
+    def _generate_noise_for_dimension(self, dimension_index):
+        """Generate the next noise value for a specific dimension."""
+        if (
+            self.positions[dimension_index] % self.period == 0
+            and self.positions[dimension_index] > 0
+        ):
+            # Append a new gradient every period
+            new_gradient = np.random.rand() * 2 - 1
+            self.gradients[dimension_index] = np.append(
+                self.gradients[dimension_index], new_gradient
+            )
+
+        segment_index = self.positions[dimension_index] // self.period
+        local_x = (self.positions[dimension_index] % self.period) / self.period
+
+        left_grad = self.gradients[dimension_index][segment_index]
+        right_grad = self.gradients[dimension_index][segment_index + 1]
+
+        noise_value = self.interpolate(left_grad, right_grad, local_x)
+        self.positions[dimension_index] += 1
+
+        return noise_value
 
 
 def R_aero_to_body(alpha, beta):
