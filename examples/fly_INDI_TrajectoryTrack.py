@@ -213,6 +213,12 @@ if __name__ == "__main__":
         num_drones=ARGS.num_drones,
     )
 
+    p.loadURDF(os.path.dirname(os.path.abspath(__file__))+"/../dronesim/assets/gate_50_curved.urdf",
+                       mid_gate,
+                       p.getQuaternionFromEuler([0, 0, 0 ]),
+                       globalScaling=1.0,
+                       physicsClientId=PYB_CLIENT
+                       )
     #### Initialize the controllers ############################
     ctrl = [INDIControl(drone_model=drone) for drone in ARGS.drone]
 

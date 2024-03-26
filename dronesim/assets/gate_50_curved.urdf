@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+
+<robot name="gate-50-curved">
+
+  <link concave="yes" name="base_link"> 
+
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.0"/>
+      <inertia ixx="100" ixy="100.0" ixz="100.0" iyy="100" iyz="100.0" izz="100"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <!-- <box size=".5 .5 1.5" /> -->
+        <mesh filename="./Gate_50_curved.obj" scale="1.4 1.4 1.0"/>
+      </geometry> 
+      <material name="red">
+        <color rgba="1. 0. 0. 0.9"/>
+      </material> 
+    </visual>
+
+    <collision concave="yes">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="./Gate_50_curved.obj" scale="1.4 1.4 1.0"/>
+      </geometry>
+    </collision>  
+
+  </link>
+
+</robot>
+
