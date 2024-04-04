@@ -1937,7 +1937,9 @@ class BaseAviary(gym.Env):
         These obstacles are loaded from standard URDF files included in Bullet.
 
         """
-        print("Adding obstacles from BaseAviary is not possible anymore. Please load them as URDF in the main script.")
+        print(
+            "Adding obstacles from BaseAviary is not possible anymore. Please load them as URDF in the main script."
+        )
         # p.loadURDF("samurai.urdf",
         #            physicsClientId=self.CLIENT
         #            )
