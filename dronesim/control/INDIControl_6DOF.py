@@ -220,6 +220,7 @@ class INDIControl(BaseControl):
         super().reset()
         #### Store the last roll, pitch, and yaw ###################
         self.last_rpy = np.zeros(3)
+        self.diffed_cur_ang_vel = np.zeros(3)  # ERASE
         #### Initialized PID control variables #####################
         self.last_pos_e = np.zeros(3)
         self.integral_pos_e = np.zeros(3)
@@ -266,6 +267,7 @@ class INDIControl(BaseControl):
         target_rpy=np.zeros(3),
         target_vel=np.zeros(3),
         target_rpy_rates=np.zeros(3),
+        target_acc=np.zeros(3),
     ):
         """Computes the PID control action (as RPMs) for a single drone.
 
@@ -315,6 +317,7 @@ class INDIControl(BaseControl):
             target_pos,
             target_rpy,
             target_vel,
+            target_acc,
         )
 
         rpm = self._INDIAttitudeControl(
@@ -344,6 +347,7 @@ class INDIControl(BaseControl):
         target_pos,
         target_rpy,
         target_vel,
+        target_acc=np.zeros(3),
         use_quaternion=False,
         nonlinear_increment=False,
     ):
