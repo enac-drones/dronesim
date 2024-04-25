@@ -5,7 +5,7 @@ import pdb
 # Active set library from : https://github.com/JimVaranelli/ActiveSet
 import sys
 import xml.etree.ElementTree as etxml
-from dataclasses import dataclass
+
 
 import numpy as np
 import pybullet as p
@@ -17,106 +17,13 @@ from dronesim.control.BaseControl import BaseControl
 from dronesim.control.wls_alloc import wls_alloc
 from dronesim.envs.BaseAviary import BaseAviary, DroneModel
 
-# @dataclass
-# class PlayingCard:
-#     rank: str
-#     suit: str
 
-
-@dataclass
-class Rate:
-    p: float = 0.0
-    q: float = 0.0
-    r: float = 0.0
-
-
-@dataclass
-class Gains:
-    att = Rate()
-    rate = Rate()
-
-
-def quat_comp(a2b, b2c):
-    # qi,qx,qy,qz = 0,1,2,3
-    qi, qx, qy, qz = 3, 0, 1, 2
-    a2c = np.zeros(4)
-    a2c[qi] = (
-        a2b[qi] * b2c[qi] - a2b[qx] * b2c[qx] - a2b[qy] * b2c[qy] - a2b[qz] * b2c[qz]
-    )
-    a2c[qx] = (
-        a2b[qi] * b2c[qx] + a2b[qx] * b2c[qi] + a2b[qy] * b2c[qz] - a2b[qz] * b2c[qy]
-    )
-    a2c[qy] = (
-        a2b[qi] * b2c[qy] - a2b[qx] * b2c[qz] + a2b[qy] * b2c[qi] + a2b[qz] * b2c[qx]
-    )
-    a2c[qz] = (
-        a2b[qi] * b2c[qz] + a2b[qx] * b2c[qy] - a2b[qy] * b2c[qx] + a2b[qz] * b2c[qi]
-    )
-    return a2c
-
-
-def quat_inv_comp(q1, q2):
-    # i,x,y,z = 0,1,2,3
-    i, x, y, z = 3, 0, 1, 2
-    qerr = np.zeros(4)
-    qerr[i] = q1[i] * q2[i] + q1[x] * q2[x] + q1[y] * q2[y] + q1[z] * q2[z]
-    qerr[x] = q1[i] * q2[x] - q1[x] * q2[i] - q1[y] * q2[z] + q1[z] * q2[y]
-    qerr[y] = q1[i] * q2[y] + q1[x] * q2[z] - q1[y] * q2[i] - q1[z] * q2[x]
-    qerr[z] = q1[i] * q2[z] - q1[x] * q2[y] + q1[y] * q2[x] - q1[z] * q2[i]
-    return qerr
-
-
-def quat_norm(q):
-    return np.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3])
-
-
-def quat_normalize(q):
-    n = quat_norm(q)
-    if n > 0.0:
-        for i in range(4):
-            q[i] = q[i] / n
-    return q
-
-
-def quat_wrap_shortest(q):
-    w = 3  # 0 or 3 according to quaternion definition.
-    if q[w] < 0:
-        for i in range(4):  # QUAT_EXPLEMENTARY(q)
-            q[i] = -q[i]
-    return q
-
-
-def thrust_from_rpm(rpm):
-    """input is the array of actuator rpms"""
-    thrust = 0.0
-    for _rpm in rpm:
-        thrust += _rpm**2.0 * 3.16e-10
-    return thrust
-
-
-def skew(w):
-    return np.array([[0.0, -w[2], w[1]], [w[2], 0.0, -w[0]], [-w[1], w[1], 0.0]])
-
-
-def jac_vec_quat(vec, q):
-    w = q[3]
-    v = q[:3]
-    I = np.eye(3)
-    p1 = w * vec + np.cross(v, vec)
-    p2 = np.dot(np.dot(v.T, vec), I) + v.dot(vec.T) - vec.dot(v.T) - w * skew(vec)
-    return np.hstack([p1.reshape(3, 1), p2]) * 2  # p1, p2
-
-
-def norm_ang(x):
-    while x > np.pi:
-        x -= 2 * np.pi
-    while x < -np.pi:
-        x += 2 * np.pi
-    return x
+from dronesim.utils.math import quat_inv_comp, quat_wrap_shortest, norm_ang, quat_comp, quat_norm, quat_normalize
+from dronesim.utils.utils import Rate, Gains
 
 
 class INDIControl(BaseControl):
-    """INDI control class for Crazyflies.
+    """INDI control class
 
     by Murat Bronz based on work conducted at TUDelft by Ewoud Smeur.
 
@@ -142,25 +49,6 @@ class INDIControl(BaseControl):
         super().__init__(drone_model=drone_model, g=g)
         self.DRONE_MODEL = drone_model
         self.URDF = self.DRONE_MODEL + ".urdf"
-
-        # this is being called from the init of BaseControl !
-        # self._parseURDFControlParameters()
-        # ========
-        # self.P_COEFF_FOR = np.array([.4, .4, 1.25])
-        # self.I_COEFF_FOR = np.array([.05, .05, .05])
-        # self.D_COEFF_FOR = np.array([.2, .2, .5])
-        # self.P_COEFF_TOR = np.array([70000., 70000., 60000.])
-        # self.I_COEFF_TOR = np.array([.0, .0, 500.])
-        # self.D_COEFF_TOR = np.array([20000., 20000., 12000.])
-        # self.PWM2RPM_SCALE = 0.2685
-        # self.PWM2RPM_CONST = 4070.3
-        # self.MIN_PWM = 20000
-        # self.MAX_PWM = 65535
-        # if self.DRONE_MODEL == DroneModel.CF2X:
-        #     self.MIXER_MATRIX = np.array([ [.5, -.5,  -1], [.5, .5, 1], [-.5,  .5,  -1], [-.5, -.5, 1] ])
-        # elif self.DRONE_MODEL == DroneModel.CF2P:
-        #     self.MIXER_MATRIX = np.array([ [0, -1,  -1], [+1, 0, 1], [0,  1,  -1], [-1, 0, 1] ])
-        # ========
         self.reset()
 
     ################################################################################
@@ -272,12 +160,13 @@ class INDIControl(BaseControl):
         cur_vel,
         cur_ang_vel,
         target_pos,
-        target_rpy=np.zeros(3),
         target_vel=np.zeros(3),
-        target_rpy_rates=np.zeros(3),
         target_acc=np.zeros(3),
+        target_rpy=np.zeros(3),
+        target_rpy_rates=np.zeros(3),
+        
     ):
-        """Computes the PID control action (as RPMs) for a single drone.
+        """Computes the INDI control action (as RPMs) for a single drone.
 
         Parameters
         ----------
@@ -293,10 +182,12 @@ class INDIControl(BaseControl):
             (3,1)-shaped array of floats containing the current angular velocity.
         target_pos : ndarray
             (3,1)-shaped array of floats containing the desired position.
-        target_rpy : ndarray, optional
-            (3,1)-shaped array of floats containing the desired orientation as roll, pitch, yaw.
         target_vel : ndarray, optional
             (3,1)-shaped array of floats containing the desired velocity.
+        target_acc : ndarray, optional
+            (3,1)-shaped array of floats containing the desired accelerations.
+        target_rpy : ndarray, optional
+            (3,1)-shaped array of floats containing the desired orientation as roll, pitch, yaw.
         target_rpy_rates : ndarray, optional
             (3,1)-shaped array of floats containing the desired roll, pitch, and yaw rates.
 
@@ -393,14 +284,12 @@ class INDIControl(BaseControl):
         vel_e = speed_sp + target_vel - cur_vel
 
         # Set acceleration setpoint :
-
-        # accel_sp = (speed_sp - cur_vel) * self.guidance_indi_speed_gain
         accel_sp = vel_e * self.guidance_indi_speed_gain
 
         # Calculate the acceleration via finite difference TODO : this is a rotated sensor output in real life, so ad sensor to the sim !
         cur_accel = (cur_vel - self.last_vel) / control_timestep
-        # print(f'Cur Velocity : {cur_vel[2]}, Last Velocity : {self.last_vel[2]}')
-        self.last_vel = cur_vel
+  
+        self.last_vel = cur_vel # FIXME remove
 
         accel_e = accel_sp + target_acc - cur_accel
 
@@ -412,8 +301,6 @@ class INDIControl(BaseControl):
         # guidance_indi_calcG_yxz(&Ga, &eulers_yxz);
         cur_rpy = np.array(p.getEulerFromQuaternion(cur_quat))
         phi, theta, psi = cur_rpy[0], cur_rpy[1], cur_rpy[2]
-
-        # print(f'Phi-Theta-Psi : {phi}, {theta}, {psi}')
 
         sph, sth, sps = np.sin(phi), np.sin(theta), np.sin(psi)
         cph, cth, cps = np.cos(phi), np.cos(theta), np.cos(psi)
@@ -446,41 +333,23 @@ class INDIControl(BaseControl):
             ]
         )
 
-        Gp = np.array(
-            [
-                [
-                    (cph * sps * cth) * T,
-                    (cth * cps - sph * sps * sth) * T,
-                    sph * cps + sph * sps * cth,
-                ],
-                [
-                    (-cph * cth * cps) * T,
-                    (cph * sps + sph * sth * cps) * T,
-                    sps * sth - cps * cth * sph,
-                ],
-                [-sph * cth * T, -cph * sth * T, cph * cth],
-            ]
-        )
-
         # Invert this matrix
         G_inv = np.linalg.pinv(G)  # FIXME
 
-        # Calculate roll,pitch and thrust command
+        # Calculate roll,pitch and thrust increments
         control_increment = G_inv.dot(accel_e)
 
-        target_quat = np.array([0.0, 0.0, 0.0, 1.0])
+        yaw_increment = norm_ang(target_rpy[2] - psi)
 
-        yaw_increment = norm_ang(target_rpy[2] - psi)  # cur_rpy[2]
+        # Add increments to the attitude and thrust
         target_euler = cur_rpy + np.array(
             [control_increment[0], control_increment[1], yaw_increment]
         )
-        # target_euler = np.array([control_increment[0], control_increment[1], yaw_increment])
+        thrust = self.last_thrust + control_increment[2]
 
-        thrust = self.last_thrust + control_increment[2]  # for EULER version !!!! FIXME
-        # thrust = self.last_thrust + thrust_increment # for Quaternion version
-
-        # print(f' Roll : {control_increment[0]}, Pitch : {control_increment[1]} , Yaw :  {yaw_increment}, Thr : {thrust}, Psi : {psi}')
-        return thrust, target_euler, pos_e, target_quat  # quat_increment
+        # Placeholder FIXME
+        target_quat = np.array([0.0, 0.0, 0.0, 1.0])
+        return thrust, target_euler, pos_e, target_quat
 
     ################################################################################
 

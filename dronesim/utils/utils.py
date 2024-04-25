@@ -9,6 +9,19 @@ from math import cos, log, pi, sin
 
 import numpy as np
 from scipy.optimize import nnls
+from dataclasses import dataclass
+
+@dataclass
+class Rate:
+    p: float = 0.0
+    q: float = 0.0
+    r: float = 0.0
+
+
+@dataclass
+class Gains:
+    att = Rate()
+    rate = Rate()
 
 
 # from gym_pybullet_drones.database.propeller_database import *
