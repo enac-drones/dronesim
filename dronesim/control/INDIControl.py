@@ -125,9 +125,9 @@ class INDIControl(BaseControl):
 
         self.last_rates = np.zeros(3)  # p,q,r
         # self.last_pwm = np.ones(self.indi_actuator_nr)*1. # initial pwm
-        self.last_thrust = 0.3
+        self.last_thrust = 0.0
         # self.indi_increment = np.zeros(4)
-        self.cmd = np.ones(self.indi_actuator_nr) * 0.5
+        self.cmd = np.ones(self.indi_actuator_nr) * 0.0
         self.last_vel = np.zeros(3)
         self.last_torque = np.zeros(3)  # For SU2 controller
 
@@ -401,6 +401,29 @@ class INDIControl(BaseControl):
         rate_sp.p = self.indi_gains.att.p * att_err[0]
         rate_sp.q = self.indi_gains.att.q * att_err[1]
         rate_sp.r = self.indi_gains.att.r * att_err[2]
+
+        self.cmd = self._INDIRateControl(
+            control_timestep,
+            thrust,
+            cur_quat,
+            cur_ang_vel,
+            target_rpy_rates=np.array([rate_sp.p, rate_sp.q, rate_sp.r])
+        )
+        return self.cmd
+
+    def _INDIRateControl(
+            self,
+            control_timestep,
+            thrust,
+            cur_quat,
+            cur_ang_vel,
+            target_rpy_rates ):
+
+        # FIXME : rate set point, reference angular speed, rpy rates, FIND a correct unique name for all...
+        rate_sp = Rate()
+        rate_sp.p = target_rpy_rates[0]
+        rate_sp.q = target_rpy_rates[1]
+        rate_sp.r = target_rpy_rates[2]
 
         # Rotate angular velocity to body frame
         R = np.array(p.getMatrixFromQuaternion(cur_quat)).reshape(3, 3)
