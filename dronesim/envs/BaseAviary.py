@@ -1937,6 +1937,9 @@ class BaseAviary(gym.Env):
         These obstacles are loaded from standard URDF files included in Bullet.
 
         """
+        print(
+            "Adding obstacles from BaseAviary is not possible anymore. Please load them as URDF in the main script."
+        )
         # p.loadURDF("samurai.urdf",
         #            physicsClientId=self.CLIENT
         #            )
@@ -1946,18 +1949,6 @@ class BaseAviary(gym.Env):
         # p.loadURDF(os.path.dirname(os.path.abspath(__file__))+"/../assets/voliere.urdf",
         #            physicsClientId=self.CLIENT
         #            )
-        shape_id = p.createVisualShape(
-            shapeType=p.GEOM_MESH,
-            fileName="/media/ge79qad/FastScratch/GFlow-3D/build/ball.obj",
-            physicsClientId=self.CLIENT,
-        )
-        body_id = p.createMultiBody(
-            baseVisualShapeIndex=shape_id,
-            basePosition=(0, 0, 2.5),
-            baseOrientation=(0, 0, 0, 1),
-            physicsClientId=self.CLIENT,
-            #    useFixedBase=1
-        )
         # p.loadURDF("duck_vhacd.urdf",
         #            [-.5, -.5, .05],
         #            p.getQuaternionFromEuler([0, 0, 0]),
