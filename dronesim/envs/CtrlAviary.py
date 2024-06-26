@@ -111,8 +111,8 @@ class CtrlAviary(BaseAviary):
         return spaces.Dict(
             {
                 str(i): spaces.Box(
-                    low=np.array(self.drones[i].MIN_PWM),
-                    high=np.array(self.drones[i].MAX_PWM),
+                    low=np.float32(np.array(self.drones[i].MIN_PWM)),
+                    high=np.float32(np.array(self.drones[i].MAX_PWM)),
                     dtype=np.float32,
                 )
                 for i in range(self.NUM_DRONES)
@@ -198,7 +198,7 @@ class CtrlAviary(BaseAviary):
                 str(i): spaces.Dict(
                     {
                         "state": spaces.Box(
-                            low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32
+                            low=np.float32(obs_lower_bound), high=np.float32(obs_upper_bound), dtype=np.float32
                         ),
                         "neighbors": spaces.MultiBinary(self.NUM_DRONES),
                     }
