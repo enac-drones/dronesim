@@ -70,7 +70,6 @@ class INDIControl(BaseControl):
         self.indi_actuator_nr = int(indi.attrib["actuator_nr"])
         self.indi_output_nr = int(indi.attrib["output_nr"])
         self.G1 = np.zeros((self.indi_output_nr, self.indi_actuator_nr))
-        print("*************")
 
         indi = URDF_TREE.find("control")
         for i in range(self.indi_output_nr):

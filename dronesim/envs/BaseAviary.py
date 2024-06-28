@@ -378,7 +378,6 @@ class BaseAviary(gym.Env):
             )
 
         self.INIT_VELS = initial_vels
-        print("INITTTT", self.INIT_VELS)
 
         if initial_rpys is None:
             self.INIT_RPYS = np.zeros((self.NUM_DRONES, 3))
