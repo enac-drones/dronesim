@@ -1,0 +1,176 @@
+<?xml version="1.0"?>
+<robot name="coaxial_birotor">
+
+  <configuration type="coaxial_birotor"/>
+
+  <properties arm="0.0635" kf="2.0e-8" km="2.74e-10" thrust2weight="2" max_speed_kmh="30" gnd_eff_coeff="11.36859" prop_radius="3.31348e-2" drag_coeff_xy="9.1785e-7" drag_coeff_z="10.311e-7" dw_coeff_1="2267.18" dw_coeff_2=".16" dw_coeff_3="-.11"/>
+
+  <control>
+    <indi actuator_nr="4" output_nr="4" />
+    <indi_1 roll="   0.0   0.0   10.    0." />
+    <indi_2 pitch="  0.0   0.0    0.   10." />
+    <indi_3 yaw="   -7.0   7.0    0.    0." />
+    <indi_4 thrust=" 1.7   1.7    0.    0." />
+
+    <indi_guidance_gains>
+      <pos kp="1.0" kd="2.2"/>
+    </indi_guidance_gains>
+    
+    <indi_att_gains>
+      <att  p="7."  q="7."  r="5."  />
+      <rate p="18." q="18." r="10." />
+    </indi_att_gains>
+
+    <pwm>
+      <pwm2rpm scale="20000. 20000. 0. 0." const="0. 0. 0. 0." />
+      <limit min="0  0  -1  -1" max="1  1  1  1" />
+    </pwm>
+  </control>
+
+<link name="mainbody">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.02"/> 
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <material name="white">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+    <inertial>
+    <origin xyz="0.0 0.0 0.0"/>
+      <mass value="0.15"/>
+      <inertia ixx="6.2e-4" ixy="0.0" ixz="0.0" iyy="6.2e-4" iyz="0.0" izz="1.1e-3"/>
+    </inertial>
+    <collision>
+      <geometry>
+        <box size="0.04 0.04 0.02"/> 
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+
+<link name="propUp">
+    <visual>
+      <geometry>
+        <cylinder radius=".062" length=".002"/>
+        <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0 1 0 0.4"/>
+      </material>
+    </visual>
+    <inertial>
+    <origin xyz="0.0 0.0 0.001"/>
+      <mass value="0.003"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
+     <collision>
+      <geometry>
+        <cylinder radius=".062" length=".002"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.001"/>
+    </collision>
+  </link>
+
+<link name="propDown">
+    <visual>
+      <geometry>
+        <cylinder radius=".062" length=".002"/>
+        <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0 1 0 0.4"/>
+      </material>
+    </visual>
+    <inertial>
+    <origin xyz="0.0 0.0 0.001"/>
+      <mass value="0.003"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
+     <collision>
+      <geometry>
+        <cylinder radius=".062" length=".002"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.001"/>
+    </collision>
+  </link>
+
+<link name="motorUp">
+    <visual>
+      <geometry>
+        <cylinder radius=".012" length=".02"/> 
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <material name="white">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+    <inertial>
+    <origin xyz="0.0 0.0 0.0"/>
+      <mass value="0.03"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
+     <collision>
+      <geometry>
+        <box size="0.02 0.02 0.02"/> 
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+
+<link name="motorUp_base">
+    <visual>
+      <geometry>
+        <cylinder radius=".015" length=".003"/> 
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <material name="dark grey">
+        <color rgba="0.4 0.4 0.4 1.0"/>
+      </material>
+    </visual>
+    <inertial>
+    <origin xyz="0.0 0.0 0.0"/>
+      <mass value="0.03"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
+     <collision>
+      <geometry>
+        <box size="0.08 0.02 0.02"/> 
+      </geometry>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+
+  <joint name="body_to_motorUp_X" type="revolute">
+    <axis xyz="1 0 0"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.06"/>
+    <parent link="mainbody"/>
+    <child link="motorUp_base"/>
+    <limit effort="1" velocity="0.5"/>
+    <joint_properties damping="0.0" friction="0.0"/>
+  </joint>
+
+  <joint name="body_to_motorUp_Y" type="revolute">
+    <axis xyz="0 1 0"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.01"/>
+    <parent link="motorUp_base"/>
+    <child link="motorUp"/>
+    <limit effort="1" velocity="0.5"/>
+    <joint_properties damping="0.0" friction="0.0"/>
+  </joint>
+
+  <joint name="motorUp_to_propUp" type="fixed">
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.01"/>
+    <parent link="motorUp"/>
+    <child link="propUp"/>
+  </joint>
+
+  <joint name="motorUp_to_propDown" type="fixed">
+    <origin rpy="0 0 0" xyz="0.0 0.0 -0.04"/>
+    <parent link="mainbody"/>
+    <child link="propDown"/>
+  </joint>
+
+
+</robot>
