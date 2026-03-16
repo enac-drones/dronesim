@@ -121,6 +121,125 @@ def qr_solve(A, b):
 #  * @return Number of iterations, -1 upon failure
 #  */
 
+from dataclasses import dataclass
+
+@dataclass
+class OCAProblem:
+    G: np.ndarray
+    u_n: int
+    v: np.ndarray
+    Wu: np.ndarray
+    Wv: np.ndarray
+    u_min: np.ndarray
+    u_max: np.ndarray
+    u_ref: np.ndarray
+    gamma:float
+    
+    def __post_init__(self):
+        assert self.G.shape[0] == self.v.shape[0] == self.Wv.shape[0]
+        assert self.G.shape[1] == self.u_n == self.Wu.shape[0] == self.u_min.shape[0] == self.u_max.shape[0] == self.u_ref.shape[0] 
+        
+        assert self.gamma > 0.0
+        assert np.all(self.u_min <= self.u_max)
+        assert np.all(self.u_ref >= self.u_min) and np.all(self.u_ref <= self.u_max)
+
+def scipy_wls_alloc(v, umin, umax, B, u_guess, W_init, Wv, Wu, up, gamma_sq=100000, imax=100):
+    from scipy import optimize as opt
+    if up is None:
+        up = np.zeros_like(umin)
+    Wu_mat = np.diag(Wu)
+    Wv_mat = np.diag(Wv)
+    A = np.vstack((gamma_sq * Wv_mat @ B,  Wu_mat))
+    b = np.hstack((gamma_sq * Wv_mat @ v, Wu_mat @ up))
+    
+    sol = opt.lsq_linear(A, b, bounds=(umin, umax),
+                   method='bvls', tol=1e-6)
+    
+    if sol.success:
+        print(sol.nit)
+        return sol.x, sol.nit
+    else:
+        return None, imax+1
+    
+def scipy_two_step_alloc(v, umin, umax, B, u_guess, W_init, Wv, Wu, up, gamma_sq=100000, imax=100):
+    from scipy import optimize as opt
+    if up is None:
+        up = np.zeros_like(umin)
+    Wu_mat = np.diag(Wu)
+    Wv_mat = np.diag(Wv)
+    A = Wv_mat @ B
+    b = Wv_mat @ v
+    
+    sol = opt.lsq_linear(A, b, bounds=(umin, umax),
+                   method='bvls', tol=1e-6)
+    
+    
+    if not sol.success:
+        return None, imax+1
+    
+    Achieved = A @ sol.x
+    
+    def obj_fun(u):
+        return 0.5 * np.linalg.norm(Wu_mat @ (u - up))**2
+    
+    def jac_fun(u):
+        return Wu_mat @ (u - up)
+    
+    def hess_fun(u):
+        return Wu_mat
+    
+    better_sol = opt.minimize(
+        obj_fun,
+        sol.x,
+        bounds=opt.Bounds(umin, umax),
+        method='SLSQP', tol=1e-6,
+        jac=jac_fun,
+        constraints=opt.LinearConstraint(A, Achieved - 1e-3, Achieved + 1e-3)
+    )
+    
+    if better_sol.success:
+        return better_sol.x, better_sol.nit
+    else:
+        return None, imax+1
+
+def mixed_two_step_alloc(v, umin, umax, B, u_guess, W_init, Wv, Wu, up, gamma_sq=100000, imax=100):
+    
+    u, it = wls_alloc(v, umin, umax, B, u_guess, W_init, Wv, Wu, up, gamma_sq, imax)
+    
+    from scipy import optimize as opt
+    if up is None:
+        up = np.zeros_like(umin)
+    Wu_mat = np.diag(Wu)
+    Wv_mat = np.diag(Wv)
+    A = Wv_mat @ B
+    b = Wv_mat @ v
+    
+    Achieved = A @ u
+    
+    def obj_fun(u):
+        return 0.5 * np.linalg.norm(Wu_mat @ (u - up))**2
+    
+    def jac_fun(u):
+        return Wu_mat @ (u - up)
+    
+    def hess_fun(u):
+        return Wu_mat
+    
+    better_sol = opt.minimize(
+        obj_fun,
+        u,
+        bounds=opt.Bounds(umin, umax),
+        method='SLSQP', tol=1e-6,
+        jac=jac_fun,
+        constraints=opt.LinearConstraint(A, Achieved - 1e-6, Achieved + 1e-6),
+    )
+    
+    print(better_sol.message)
+    
+    if better_sol.success:
+        return better_sol.x, better_sol.nit
+    else:
+        return u, it
 
 def wls_alloc(v, umin, umax, B, u_guess, W_init, Wv, Wu, up, gamma_sq=100000, imax=100):
     # Allocate variables, use defaults where parameters are set to 0

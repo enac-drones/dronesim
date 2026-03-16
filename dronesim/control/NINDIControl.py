@@ -1,8 +1,4 @@
-import math
 import os
-import pdb
-
-import sys
 import xml.etree.ElementTree as etxml
 
 
@@ -12,8 +8,8 @@ from scipy.spatial.transform import Rotation
 
 from dronesim.control.BaseControl import BaseControl
 
-from dronesim.control.wls_alloc import wls_alloc as wls_alloc
-# from dronesim.control.lnwls_alloc import indi_lsi_wrapper as wls_alloc
+# from dronesim.control.ActiveSet import ActiveSet, ConstrainedLS
+from dronesim.control.wls_alloc import scipy_two_step_alloc as wls_alloc
 from dronesim.envs.BaseAviary import BaseAviary, DroneModel
 
 
@@ -21,10 +17,14 @@ from dronesim.utils.math import quat_inv_comp, quat_wrap_shortest, norm_ang, qua
 from dronesim.utils.utils import Rate, Gains
 
 
-class INDIControl(BaseControl):
-    """INDI control class
+class NINDIControl(BaseControl):
+    """NINDI control class: Non-Incremental Nonlinear Dynamic Inversion.
+    
+    It was observed that the control effectiveness matrix G is constant,
+    and so not related to incremental control. Thus the allocation can be
+    made directly in a non-incremental way.
 
-    by Murat Bronz based on work conducted at TUDelft by Ewoud Smeur.
+    by Maël FEURGARD.
 
     """
 
@@ -126,7 +126,7 @@ class INDIControl(BaseControl):
         self.last_thrust:float = 0.0
         # self.indi_increment = np.zeros(4)
         self.cmd            :np.ndarray = np.zeros(self.indi_actuator_nr)
-        self.cmd_eps        :np.ndarray = np.ones(self.indi_actuator_nr)*0.05
+        self.cmd_eps        :np.ndarray = np.ones(self.indi_actuator_nr)*100
         self.last_vel       :np.ndarray = np.zeros(3)
         self.last_torque    :np.ndarray = np.zeros(3)  # For SU2 controller
 
@@ -401,7 +401,7 @@ class INDIControl(BaseControl):
         rate_sp.q = self.indi_gains.att.q * att_err[1]
         rate_sp.r = self.indi_gains.att.r * att_err[2]
 
-        self.cmd = self._INDIRateControl(
+        self.cmd = self._NINDIRateControl(
             control_timestep,
             thrust,
             cur_quat,
@@ -410,7 +410,7 @@ class INDIControl(BaseControl):
         )
         return self.cmd
 
-    def _INDIRateControl(
+    def _NINDIRateControl(
             self,
             control_timestep:float,
             thrust          :float,
@@ -448,48 +448,42 @@ class INDIControl(BaseControl):
         angular_accel_ref.r = (rate_sp.r - rates_filt.r) * self.indi_gains.rate.r
 
         indi_v = np.zeros(4)  # roll-pitch-yaw-thrust
-        indi_v[0] = angular_accel_ref.p - angular_accel[0]
-        indi_v[1] = angular_accel_ref.q - angular_accel[1]
-        indi_v[2] = angular_accel_ref.r - angular_accel[2]
-        indi_v[3] = thrust - self.last_thrust  # * 0.
+        indi_v[0] = angular_accel_ref.p
+        indi_v[1] = angular_accel_ref.q
+        indi_v[2] = angular_accel_ref.r
+        indi_v[3] = thrust
         self.last_thrust = thrust
 
-        pseudo_inv = 0
-        if pseudo_inv:
-            indi_du = np.dot(np.linalg.pinv(self.G1 / 0.05), indi_v)  # *self.m
-            # print(f'Command : {self.cmd}')
-            # pdb.set_trace()
-        else:
-            # Use Active set for control allocation
-            umin = np.asarray(
-                [max(self.MIN_PWM[i] - self.cmd[i],-self.cmd_eps[i]) for i in range(self.indi_actuator_nr)]
-            )
-            umax = np.asarray(
-                [min(self.MAX_PWM[i] - self.cmd[i],self.cmd_eps[i]) for i in range(self.indi_actuator_nr)]
-            )
-            
-            print(f'UMIN : {umin}  ---  UMAX : {umax}')
-            
-            # umax = np.asarray([self.MAX_PWM for i in range(4)])
-            # indi_v1 = [indi_v[i] for i in range(4)]
 
-            up = np.array([0., 0., 0., 0.])
-            Wv = np.array([1000, 1000, 0.1, 10])
-            Wu = np.ones(self.indi_actuator_nr)  # np.array([1, 1, 1, 1, 1, 1]) #FIXME
-            u_guess = None
-            W_init = None
-            # up = None
-
-            # import scipy.optimize
-            # res = scipy.optimize.lsq_linear(A, v, bounds=(umin, umax), lsmr_tol='auto', verbose=1)
-            indi_du, nit = wls_alloc(
-                indi_v, umin, umax, self.G1 / 0.05, u_guess, W_init, Wv, Wu, up
-            )
+        # Use Active set for control allocation
+        cmd_eps = 0.05 # 5% of command as epsilon for the active set, to avoid chattering around the limits
+        
+        umin = self.MIN_PWM.copy()
+        umax = self.MAX_PWM.copy()
+        for i in range(len(self.cmd)):
+            umin[i] = max(umin[i], self.cmd[i]-cmd_eps)
+            umax[i] = min(umax[i], self.cmd[i]+cmd_eps)
             
-            print(f'INDI_V : {indi_v}  ---  INDI_DU : {indi_du}  ---  NIT : {nit}')
+        print(f'UMIN : {umin}  ---  UMAX : {umax} ---  CMD : {self.cmd}')
+            
 
-        self.cmd += indi_du
-        self.cmd = np.clip(self.cmd, self.MIN_PWM, self.MAX_PWM)  # command in PWM
+        up = self.cmd
+        Wv = np.array([1000, 1000, 0.1, 10])
+        # Wv /= np.max(Wv) # Normalize the weights
+        Wu = np.ones(self.indi_actuator_nr)  # np.array([1, 1, 1, 1, 1, 1]) #FIXME
+        u_guess = None
+        W_init = None
+
+        # import scipy.optimize
+        # res = scipy.optimize.lsq_linear(A, v, bounds=(umin, umax), lsmr_tol='auto', verbose=1)
+        indi_du, nit = wls_alloc(
+            indi_v, umin, umax, self.G1 / 0.05, u_guess, W_init, Wv, Wu, up
+        )
+            
+        print(f'INDI_V : {indi_v}  ---  INDI_DU : {indi_du}  ---  NIT : {nit}')
+        if indi_du is not None:
+            self.cmd = indi_du
+        # self.cmd = np.clip(self.cmd, self.MIN_PWM, self.MAX_PWM)  # command in PWM
 
         # print(f'CMD : {self.cmd}  ---  RPM : {self.rpm_of_pwm(self.cmd)}')
         return self.cmd  # self.rpm_of_pwm(self.cmd)

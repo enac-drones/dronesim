@@ -2,7 +2,6 @@ import math
 import os
 import pdb
 
-# Active set library from : https://github.com/JimVaranelli/ActiveSet
 import sys
 import xml.etree.ElementTree as etxml
 from dataclasses import dataclass
@@ -13,8 +12,8 @@ from scipy.spatial.transform import Rotation
 
 from dronesim.control.BaseControl import BaseControl
 
-# from dronesim.control.ActiveSet import ActiveSet, ConstrainedLS
 from dronesim.control.wls_alloc import wls_alloc
+# from dronesim.control.lnwls_alloc import indi_lsi_wrapper as wls_alloc
 from dronesim.envs.BaseAviary import BaseAviary, DroneModel
 
 # @dataclass
