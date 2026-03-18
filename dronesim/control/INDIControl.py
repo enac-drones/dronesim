@@ -473,7 +473,7 @@ class INDIControl(BaseControl):
             # umax = np.asarray([self.MAX_PWM for i in range(4)])
             # indi_v1 = [indi_v[i] for i in range(4)]
 
-            up = np.array([0., 0., 0., 0.])
+            up = np.zeros_like(umin)
             Wv = np.array([1000, 1000, 0.1, 10])
             Wu = np.ones(self.indi_actuator_nr)  # np.array([1, 1, 1, 1, 1, 1]) #FIXME
             u_guess = None

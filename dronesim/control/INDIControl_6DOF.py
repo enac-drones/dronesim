@@ -612,19 +612,22 @@ class INDIControl(BaseControl):
             # umax = np.asarray([self.MAX_PWM for i in range(4)])
             # indi_v1 = [indi_v[i] for i in range(4)]
 
-            # up = np.array([0., 0., 0., 0.])
             # Wv = np.array([1000, 1000, 0.1, 10])
-            Wv = np.array([1000, 1000, 0.1, 10, 10, 100])  # This can be a decision...
+            Wv = np.array([10, 10, 0.1, 1, 1, 5])  # This can be a decision...
             Wu = np.ones(self.indi_actuator_nr)  # np.array([1, 1, 1, 1, 1, 1]) #FIXME
             u_guess = None
             W_init = None
-            up = None
+            up = np.zeros_like(umin)
 
-            # import scipy.optimize
-            # res = scipy.optimize.lsq_linear(A, v, bounds=(umin, umax), lsmr_tol='auto', verbose=1)
-            indi_du, nit = wls_alloc(
-                indi_v, umin, umax, self.G1 / 0.05, u_guess, W_init, Wv, Wu, up
-            )
+            indi_uncapped = False
+            if indi_uncapped:
+                indi_du, nit = wls_alloc(
+                    indi_v, np.ones_like(umin) * -1e9, np.ones_like(umax) * 1e9, self.G1 / 0.05, u_guess, W_init, Wv, Wu, up
+                )
+            else:
+                indi_du, nit = wls_alloc(
+                    indi_v, umin, umax, self.G1 / 0.05, u_guess, W_init, Wv, Wu, up
+                )
 
         self.cmd += indi_du
         self.cmd = np.clip(self.cmd, self.MIN_PWM, self.MAX_PWM)  # command in PWM
