@@ -83,16 +83,6 @@ def wls_alloc(
         imax,
     )
     
-    scipy_sol, scipy_it = scipy_wls_alloc(
-        v, u_min, u_max, B, u_guess, W_init, Wv, Wu, u_pref, gamma_sq, imax
-    )
-    
-    wls_score = _wls_score(v, B, Wv, Wu, u_pref, gamma_sq, u_sol)
-    scipy_score = _wls_score(v, B, Wv, Wu, u_pref, gamma_sq, scipy_sol)
-    print(f"WLS Score: {wls_score:.6f} (it={it}), Scipy Score: {scipy_score:.6f} (it={scipy_it})")
-    print(f"Score difference: {abs(wls_score - scipy_score):.6f}")
-    print(f"WLS Solution: {u_sol}, Scipy Solution: {scipy_sol}")
-    print(f"Solution difference: {u_sol - scipy_sol}")
     return u_sol, it
     
 

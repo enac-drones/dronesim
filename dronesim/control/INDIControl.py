@@ -468,7 +468,7 @@ class INDIControl(BaseControl):
                 [min(self.MAX_PWM[i] - self.cmd[i],self.cmd_eps[i]) for i in range(self.indi_actuator_nr)]
             )
             
-            print(f'UMIN : {umin}  ---  UMAX : {umax}')
+            # print(f'UMIN : {umin}  ---  UMAX : {umax}')
             
             # umax = np.asarray([self.MAX_PWM for i in range(4)])
             # indi_v1 = [indi_v[i] for i in range(4)]
@@ -486,7 +486,7 @@ class INDIControl(BaseControl):
                 indi_v, umin, umax, self.G1 / 0.05, u_guess, W_init, Wv, Wu, up
             )
             
-            print(f'INDI_V : {indi_v}  ---  INDI_DU : {indi_du}  ---  NIT : {nit}')
+            # print(f'INDI_V : {indi_v}  ---  INDI_DU : {indi_du}  ---  NIT : {nit}')
 
         self.cmd += indi_du
         self.cmd = np.clip(self.cmd, self.MIN_PWM, self.MAX_PWM)  # command in PWM
