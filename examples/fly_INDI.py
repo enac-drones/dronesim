@@ -13,6 +13,8 @@ import numpy as np
 import pybullet as p
 
 from dronesim.control.INDIControl import INDIControl
+# from dronesim.control.NINDIControl import NINDIControl as INDIControl
+
 from dronesim.envs.BaseAviary import DroneModel, Physics
 from dronesim.envs.CtrlAviary import CtrlAviary
 from dronesim.utils.Logger import Logger

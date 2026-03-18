@@ -2,7 +2,6 @@ import math
 import os
 import pdb
 
-# Active set library from : https://github.com/JimVaranelli/ActiveSet
 import sys
 import xml.etree.ElementTree as etxml
 
@@ -13,8 +12,8 @@ from scipy.spatial.transform import Rotation
 
 from dronesim.control.BaseControl import BaseControl
 
-# from dronesim.control.ActiveSet import ActiveSet, ConstrainedLS
-from dronesim.control.wls_alloc import wls_alloc
+from dronesim.control.wls_alloc import wls_alloc as wls_alloc
+# from dronesim.control.lnwls_alloc import indi_lsi_wrapper as wls_alloc
 from dronesim.envs.BaseAviary import BaseAviary, DroneModel
 
 
@@ -95,15 +94,15 @@ class INDIControl(BaseControl):
         # self.PWM2RPM_SCALE = float(pwm2rpm.attrib['scale'])
         # self.PWM2RPM_CONST = float(pwm2rpm.attrib['const'])
         vals = [str(k) for k in pwm2rpm.attrib.values()]
-        self.PWM2RPM_SCALE = [float(s) for s in vals[0].split(" ") if s != ""]
-        self.PWM2RPM_CONST = [float(s) for s in vals[1].split(" ") if s != ""]
+        self.PWM2RPM_SCALE = np.asarray([float(s) for s in vals[0].split(" ") if s != ""])
+        self.PWM2RPM_CONST = np.asarray([float(s) for s in vals[1].split(" ") if s != ""])
 
         pwmlimit = URDF_TREE.find("control/pwm/limit")
         # self.MIN_PWM = float(pwmlimit.attrib['min'])
         # self.MAX_PWM = float(pwmlimit.attrib['max'])
         vals = [str(k) for k in pwmlimit.attrib.values()]
-        self.MIN_PWM = [float(s) for s in vals[0].split(" ") if s != ""]
-        self.MAX_PWM = [float(s) for s in vals[1].split(" ") if s != ""]
+        self.MIN_PWM = np.asarray([float(s) for s in vals[0].split(" ") if s != ""])
+        self.MAX_PWM = np.asarray([float(s) for s in vals[1].split(" ") if s != ""])
 
     ################################################################################
     def reset(self):
@@ -114,38 +113,39 @@ class INDIControl(BaseControl):
         """
         super().reset()
         #### Store the last roll, pitch, and yaw ###################
-        self.last_rpy = np.zeros(3)
-        self.diffed_cur_ang_vel = np.zeros(3)  # ERASE
+        self.last_rpy           :np.ndarray = np.zeros(3)
+        self.diffed_cur_ang_vel :np.ndarray = np.zeros(3)  # ERASE
         #### Initialized PID control variables #####################
-        self.last_pos_e = np.zeros(3)
-        self.integral_pos_e = np.zeros(3)
-        self.last_rpy_e = np.zeros(3)
-        self.integral_rpy_e = np.zeros(3)
+        self.last_pos_e     :np.ndarray = np.zeros(3)
+        self.integral_pos_e :np.ndarray = np.zeros(3)
+        self.last_rpy_e     :np.ndarray = np.zeros(3)
+        self.integral_rpy_e :np.ndarray = np.zeros(3)
 
-        self.last_rates = np.zeros(3)  # p,q,r
+        self.last_rates :np.ndarray = np.zeros(3)  # p,q,r
         # self.last_pwm = np.ones(self.indi_actuator_nr)*1. # initial pwm
-        self.last_thrust = 0.0
+        self.last_thrust:float = 0.0
         # self.indi_increment = np.zeros(4)
-        self.cmd = np.ones(self.indi_actuator_nr) * 0.0
-        self.last_vel = np.zeros(3)
-        self.last_torque = np.zeros(3)  # For SU2 controller
+        self.cmd            :np.ndarray = np.zeros(self.indi_actuator_nr)
+        self.cmd_eps        :np.ndarray = np.ones(self.indi_actuator_nr)*0.05
+        self.last_vel       :np.ndarray = np.zeros(3)
+        self.last_torque    :np.ndarray = np.zeros(3)  # For SU2 controller
 
-        self.xax = -1
-        self.yax = -1
-        self.zax = -1
-        self.xax1 = -2
-        self.yax1 = -2
-        self.zax1 = -2
+        self.xax    :float = -1
+        self.yax    :float = -1
+        self.zax    :float = -1
+        self.xax1   :float = -2
+        self.yax1   :float = -2
+        self.zax1   :float = -2
 
         # for debugging logs...
-        self.att_log = np.zeros((30 * 100, 20))
-        self.guid_log = np.zeros((30 * 100, 20))
-        self.att_log_inc = 0
-        self.guid_log_inc = 0
+        self.att_log        :np.ndarray = np.zeros((30 * 100, 20))
+        self.guid_log       :np.ndarray = np.zeros((30 * 100, 20))
+        self.att_log_inc    :float = 0
+        self.guid_log_inc   :float = 0
 
-        self.rpm = np.zeros(self.indi_actuator_nr)
+        self.rpm :np.ndarray = np.zeros(self.indi_actuator_nr)
 
-    def rpm_of_pwm(self, pwm):
+    def rpm_of_pwm(self, pwm:np.ndarray):
         self.rpm = self.PWM2RPM_SCALE * pwm + self.PWM2RPM_CONST
         return self.rpm
 
@@ -153,16 +153,16 @@ class INDIControl(BaseControl):
 
     def computeControl(
         self,
-        control_timestep,
-        cur_pos,
-        cur_quat,
-        cur_vel,
-        cur_ang_vel,
-        target_pos,
-        target_vel=np.zeros(3),
-        target_acc=np.zeros(3),
-        target_rpy=np.zeros(3),
-        target_rpy_rates=np.zeros(3),
+        control_timestep:float,
+        cur_pos         :np.ndarray,
+        cur_quat        :np.ndarray,
+        cur_vel         :np.ndarray,
+        cur_ang_vel     :np.ndarray,
+        target_pos      :np.ndarray,
+        target_vel      :np.ndarray=np.zeros(3),
+        target_acc      :np.ndarray=np.zeros(3),
+        target_rpy      :np.ndarray=np.zeros(3),
+        target_rpy_rates:np.ndarray=np.zeros(3),
         
     ):
         """Computes the INDI control action (as RPMs) for a single drone.
@@ -231,14 +231,14 @@ class INDIControl(BaseControl):
     ################################################################################
     def _INDIPositionControl(
         self,
-        control_timestep,
-        cur_pos,
-        cur_quat,
-        cur_vel,
-        target_pos,
-        target_rpy,
-        target_vel,
-        target_acc=np.zeros(3),
+        control_timestep:float,
+        cur_pos         :np.ndarray,
+        cur_quat        :np.ndarray,
+        cur_vel         :np.ndarray,
+        target_pos      :np.ndarray,
+        target_rpy      :np.ndarray,
+        target_vel      :np.ndarray,
+        target_acc      :np.ndarray=np.zeros(3),
         use_quaternion=False,
         nonlinear_increment=False,
     ):
@@ -354,13 +354,13 @@ class INDIControl(BaseControl):
 
     def _INDIAttitudeControl(
         self,
-        control_timestep,
-        thrust,
-        cur_quat,
-        cur_ang_vel,
-        target_euler,
-        target_quat,
-        target_rpy_rates,
+        control_timestep:float,
+        thrust          :float,
+        cur_quat        :np.ndarray,
+        cur_ang_vel     :np.ndarray,
+        target_euler    :np.ndarray,
+        target_quat     :np.ndarray,
+        target_rpy_rates:np.ndarray,
     ):
         """INDI attitude control.
 
@@ -412,11 +412,11 @@ class INDIControl(BaseControl):
 
     def _INDIRateControl(
             self,
-            control_timestep,
-            thrust,
-            cur_quat,
-            cur_ang_vel,
-            target_rpy_rates ):
+            control_timestep:float,
+            thrust          :float,
+            cur_quat        :np.ndarray,
+            cur_ang_vel     :np.ndarray,
+            target_rpy_rates:np.ndarray ):
 
         # FIXME : rate set point, reference angular speed, rpy rates, FIND a correct unique name for all...
         rate_sp = Rate()
@@ -454,7 +454,7 @@ class INDIControl(BaseControl):
         indi_v[3] = thrust - self.last_thrust  # * 0.
         self.last_thrust = thrust
 
-        pseudo_inv = 1
+        pseudo_inv = 0
         if pseudo_inv:
             indi_du = np.dot(np.linalg.pinv(self.G1 / 0.05), indi_v)  # *self.m
             # print(f'Command : {self.cmd}')
@@ -462,26 +462,31 @@ class INDIControl(BaseControl):
         else:
             # Use Active set for control allocation
             umin = np.asarray(
-                [self.MIN_PWM[i] - self.cmd[i] for i in range(self.indi_actuator_nr)]
+                [max(self.MIN_PWM[i] - self.cmd[i],-self.cmd_eps[i]) for i in range(self.indi_actuator_nr)]
             )
             umax = np.asarray(
-                [self.MAX_PWM[i] - self.cmd[i] for i in range(self.indi_actuator_nr)]
+                [min(self.MAX_PWM[i] - self.cmd[i],self.cmd_eps[i]) for i in range(self.indi_actuator_nr)]
             )
+            
+            # print(f'UMIN : {umin}  ---  UMAX : {umax}')
+            
             # umax = np.asarray([self.MAX_PWM for i in range(4)])
             # indi_v1 = [indi_v[i] for i in range(4)]
 
-            # up = np.array([0., 0., 0., 0.])
+            up = np.zeros_like(umin)
             Wv = np.array([1000, 1000, 0.1, 10])
             Wu = np.ones(self.indi_actuator_nr)  # np.array([1, 1, 1, 1, 1, 1]) #FIXME
             u_guess = None
             W_init = None
-            up = None
+            # up = None
 
             # import scipy.optimize
             # res = scipy.optimize.lsq_linear(A, v, bounds=(umin, umax), lsmr_tol='auto', verbose=1)
             indi_du, nit = wls_alloc(
                 indi_v, umin, umax, self.G1 / 0.05, u_guess, W_init, Wv, Wu, up
             )
+            
+            # print(f'INDI_V : {indi_v}  ---  INDI_DU : {indi_du}  ---  NIT : {nit}')
 
         self.cmd += indi_du
         self.cmd = np.clip(self.cmd, self.MIN_PWM, self.MAX_PWM)  # command in PWM

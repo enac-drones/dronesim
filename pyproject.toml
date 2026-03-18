@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dronesim"
+version = "0.1.0"
+description = "A drone simulation package"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.7"
+dependencies = [
+    "numpy",
+    "scipy",
+    "Pillow",
+    "matplotlib",
+    "cycler",
+    "gym",
+    "pybullet",
+]
+
+[tool.setuptools]
+packages = ["dronesim"]

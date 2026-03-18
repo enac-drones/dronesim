@@ -13,6 +13,8 @@ import numpy as np
 import pybullet as p
 
 from dronesim.control.INDIControl import INDIControl
+# from dronesim.control.NINDIControl import NINDIControl as INDIControl
+
 from dronesim.envs.BaseAviary import DroneModel, Physics
 from dronesim.envs.CtrlAviary import CtrlAviary
 from dronesim.utils.Logger import Logger
@@ -313,4 +315,6 @@ ax.plot3D(x_flown, y_flown, z_flown, "red", label="Flown trajectory")
 for gate in gates:
     ax.plot3D([gate[0]], [gate[1]], [gate[2]], "o")
 ax.legend(loc="upper right")
+
 plt.show()
+print(f"RMSE: {np.linalg.norm(np.array([x_flown, y_flown, z_flown]) - np.array([x, y, z])[:,:len(x_flown)]):.4f} m")
